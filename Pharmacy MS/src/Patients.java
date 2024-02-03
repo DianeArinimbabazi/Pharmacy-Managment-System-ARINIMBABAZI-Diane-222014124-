@@ -6,13 +6,13 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableModel;
 
 /*
  * To change this license header, choose License Headers in Project Properties.
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-
 /**
  *
  * @author la-paix
@@ -28,10 +28,12 @@ public class Patients extends javax.swing.JFrame {
         addPatientColumn();
         displayPatients();
     }
-     String url = "jdbc:mysql://localhost:3306/pharmacy_db?zeroDateTimeBehavior=convertToNull";
+    int patientId;
+    String url = "jdbc:mysql://localhost:3306/pharmacy_db?zeroDateTimeBehavior=convertToNull";
     String user = "root";
     String password = "";
     DefaultTableModel tbm = new DefaultTableModel();
+
     public void addPatientColumn() {
         tbm.addColumn("Patient Id");
         tbm.addColumn("Names");
@@ -48,11 +50,11 @@ public class Patients extends javax.swing.JFrame {
                 try (ResultSet resultSet = preparedStatement.executeQuery()) {
                     while (resultSet.next()) {
                         tbm.addRow(new Object[]{
-                                resultSet.getInt("id"),
-                                resultSet.getString("names"),
-                                resultSet.getString("address"),
-                                resultSet.getString("contact"),
-                                resultSet.getString("insurance")
+                            resultSet.getInt("id"),
+                            resultSet.getString("names"),
+                            resultSet.getString("address"),
+                            resultSet.getString("contact"),
+                            resultSet.getString("insurance")
                         });
                     }
                 }
@@ -65,15 +67,15 @@ public class Patients extends javax.swing.JFrame {
             JOptionPane.showMessageDialog(null, "Unexpected error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
-    
+
     // Function to clear form fields
-private void clearForm() {
-    patientNameTxt.setText("");
-    patientAddressTxt.setText("");
-    patientContactTxt.setText("");
-    patientInsuranceTxt.setText("");
-    // Add other fields as needed
-}
+    private void clearForm() {
+        patientNameTxt.setText("");
+        patientAddressTxt.setText("");
+        patientContactTxt.setText("");
+        patientInsuranceTxt.setText("");
+        // Add other fields as needed
+    }
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -116,6 +118,11 @@ private void clearForm() {
                 "Title 1", "Title 2", "Title 3", "Title 4"
             }
         ));
+        dataTable.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                dataTableMouseClicked(evt);
+            }
+        });
         jScrollPane1.setViewportView(dataTable);
 
         jLabel5.setFont(new java.awt.Font("Dialog", 1, 18)); // NOI18N
@@ -131,9 +138,19 @@ private void clearForm() {
 
         jButton2.setFont(new java.awt.Font("Dialog", 1, 18)); // NOI18N
         jButton2.setText("Update");
+        jButton2.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton2ActionPerformed(evt);
+            }
+        });
 
         jButton3.setFont(new java.awt.Font("Dialog", 1, 18)); // NOI18N
         jButton3.setText("Delete");
+        jButton3.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton3ActionPerformed(evt);
+            }
+        });
 
         jButton4.setFont(new java.awt.Font("Dialog", 1, 18)); // NOI18N
         jButton4.setText("Clear Form");
@@ -319,53 +336,156 @@ private void clearForm() {
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
         // TODO add your handling code here:
         String url = "jdbc:mysql://localhost:3306/pharmacy_db?zeroDateTimeBehavior=convertToNull";
-    String user = "root";
-    String password = "";
+        String user = "root";
+        String password = "";
 
-    String patientName = patientNameTxt.getText();
-    String patientAddress = patientAddressTxt.getText();
-    String patientContact = patientContactTxt.getText();
-    String patientInsurance = patientInsuranceTxt.getText();
+        String patientName = patientNameTxt.getText();
+        String patientAddress = patientAddressTxt.getText();
+        String patientContact = patientContactTxt.getText();
+        String patientInsurance = patientInsuranceTxt.getText();
 
-    try (Connection connection = DriverManager.getConnection(url, user, password)) {
-        // Validate input
-        if (patientName.isEmpty() || patientAddress.isEmpty() || patientContact.isEmpty() || patientInsurance.isEmpty()) {
-            JOptionPane.showMessageDialog(null, "Please fill in all patient information.", "Error", JOptionPane.ERROR_MESSAGE);
-            return; // Stop further processing
-        }
-
-        String insertQuery = "INSERT INTO patients (names, address, contact, insurance) VALUES (?, ?, ?, ?)";
-        try (PreparedStatement preparedStatement = connection.prepareStatement(insertQuery)) {
-            preparedStatement.setString(1, patientName);
-            preparedStatement.setString(2, patientAddress);
-            preparedStatement.setString(3, patientContact);
-            preparedStatement.setString(4, patientInsurance);
-
-            int rowsAffected = preparedStatement.executeUpdate();
-
-            if (rowsAffected > 0) {
-                JOptionPane.showMessageDialog(null, "Patient created successfully.", "Success", JOptionPane.INFORMATION_MESSAGE);
-                clearForm();
-                tbm.setRowCount(0);
-                displayPatients();
-                // Optionally, you can clear the input fields or navigate to another screen after successful patient creation.
-            } else {
-                JOptionPane.showMessageDialog(null, "Failed to create patient.", "Error", JOptionPane.ERROR_MESSAGE);
+        try (Connection connection = DriverManager.getConnection(url, user, password)) {
+            // Validate input
+            if (patientName.isEmpty() || patientAddress.isEmpty() || patientContact.isEmpty() || patientInsurance.isEmpty()) {
+                JOptionPane.showMessageDialog(null, "Please fill in all patient information.", "Error", JOptionPane.ERROR_MESSAGE);
+                return; // Stop further processing
             }
+
+            String insertQuery = "INSERT INTO patients (names, address, contact, insurance) VALUES (?, ?, ?, ?)";
+            try (PreparedStatement preparedStatement = connection.prepareStatement(insertQuery)) {
+                preparedStatement.setString(1, patientName);
+                preparedStatement.setString(2, patientAddress);
+                preparedStatement.setString(3, patientContact);
+                preparedStatement.setString(4, patientInsurance);
+
+                int rowsAffected = preparedStatement.executeUpdate();
+
+                if (rowsAffected > 0) {
+                    JOptionPane.showMessageDialog(null, "Patient created successfully.", "Success", JOptionPane.INFORMATION_MESSAGE);
+                    clearForm();
+                    tbm.setRowCount(0);
+                    displayPatients();
+                    // Optionally, you can clear the input fields or navigate to another screen after successful patient creation.
+                } else {
+                    JOptionPane.showMessageDialog(null, "Failed to create patient.", "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(null, "Database error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        } catch (Exception e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(null, "Unexpected error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
-    } catch (SQLException e) {
-        e.printStackTrace();
-        JOptionPane.showMessageDialog(null, "Database error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-    } catch (Exception e) {
-        e.printStackTrace();
-        JOptionPane.showMessageDialog(null, "Unexpected error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-    }
     }//GEN-LAST:event_jButton1ActionPerformed
 
     private void jButton4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton4ActionPerformed
         // TODO add your handling code here:
         clearForm();
     }//GEN-LAST:event_jButton4ActionPerformed
+
+    private void dataTableMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_dataTableMouseClicked
+        // TODO add your handling code here:
+        int index = dataTable.getSelectedRow();
+        TableModel tbm = dataTable.getModel();
+        patientId = Integer.parseInt(tbm.getValueAt(index, 0).toString());
+
+        patientNameTxt.setText(tbm.getValueAt(index, 1).toString());
+
+        patientAddressTxt.setText(tbm.getValueAt(index, 2).toString());
+        patientContactTxt.setText(tbm.getValueAt(index, 3).toString());
+        patientInsuranceTxt.setText(tbm.getValueAt(index, 4).toString());
+
+
+    }//GEN-LAST:event_dataTableMouseClicked
+
+    private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
+        // TODO add your handling code here:
+        try {
+        String patientName = patientNameTxt.getText();
+        String patientAddress = patientAddressTxt.getText();
+        String patientContact = patientContactTxt.getText();
+        String patientInsurance = patientInsuranceTxt.getText();
+
+        // Validate input
+        if (patientName.isEmpty() || patientAddress.isEmpty() || patientContact.isEmpty() || patientInsurance.isEmpty()) {
+            JOptionPane.showMessageDialog(null, "Please fill in all patient information.", "Error", JOptionPane.ERROR_MESSAGE);
+            return; // Stop further processing
+        }
+
+        // Assuming getPatientIdByName is the correct method in your code
+        // Replace it with the appropriate method to get patientId based on patientName
+        // int patientId = getPatientIdByName(patientName);
+
+        try (Connection connection = DriverManager.getConnection(url, user, password)) {
+            String updateQuery = "UPDATE patients SET names=?, address=?, contact=?, insurance=? WHERE id=?";
+            try (PreparedStatement preparedStatement = connection.prepareStatement(updateQuery)) {
+                preparedStatement.setString(1, patientName);
+                preparedStatement.setString(2, patientAddress);
+                preparedStatement.setString(3, patientContact);
+                preparedStatement.setString(4, patientInsurance);
+                preparedStatement.setInt(5, patientId); // Assuming patientId is correctly set
+
+                int rowsAffected = preparedStatement.executeUpdate();
+
+                if (rowsAffected > 0) {
+                    JOptionPane.showMessageDialog(null, "Patient updated successfully.", "Success", JOptionPane.INFORMATION_MESSAGE);
+                    clearForm();
+                    tbm.setRowCount(0);
+                    displayPatients();
+                } else {
+                    JOptionPane.showMessageDialog(null, "Failed to update patient.", "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(null, "Database error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        } catch (Exception e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(null, "Unexpected error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    } catch (Exception e) {
+        JOptionPane.showMessageDialog(null, "An error occurred. Please check your data.");
+        e.printStackTrace();
+    }
+    }//GEN-LAST:event_jButton2ActionPerformed
+
+    private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
+        // TODO add your handling code here:
+         try {
+        if (patientId >= 1) {
+            int confirm = JOptionPane.showConfirmDialog(this, "Do you want to delete this patient?");
+            if (confirm == JOptionPane.YES_OPTION) {
+                try (Connection connection = DriverManager.getConnection(url, user, password)) {
+                    String deleteQuery = "DELETE FROM patients WHERE id=?";
+                    try (PreparedStatement preparedStatement = connection.prepareStatement(deleteQuery)) {
+                        preparedStatement.setInt(1, patientId);
+
+                        int rowsAffected = preparedStatement.executeUpdate();
+
+                        if (rowsAffected > 0) {
+                            JOptionPane.showMessageDialog(null, "Patient deleted successfully.", "Success", JOptionPane.INFORMATION_MESSAGE);
+                            clearForm();
+                            tbm.setRowCount(0);
+                            displayPatients();
+                        } else {
+                            JOptionPane.showMessageDialog(null, "Failed to delete patient.", "Error", JOptionPane.ERROR_MESSAGE);
+                        }
+                    }
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                    JOptionPane.showMessageDialog(null, "Database error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    JOptionPane.showMessageDialog(null, "Unexpected error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        }
+    } catch (Exception e) {
+        JOptionPane.showMessageDialog(null, "An error occurred. Please check your data.");
+        e.printStackTrace();
+    }
+    }//GEN-LAST:event_jButton3ActionPerformed
 
     /**
      * @param args the command line arguments

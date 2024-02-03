@@ -6,13 +6,13 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableModel;
 
 /*
  * To change this license header, choose License Headers in Project Properties.
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-
 /**
  *
  * @author la-paix
@@ -29,56 +29,55 @@ public class Medicines extends javax.swing.JFrame {
         displayMedicine();
     }
     String url = "jdbc:mysql://localhost:3306/pharmacy_db?zeroDateTimeBehavior=convertToNull";
-String user = "root";
-String password = "";
+    String user = "root";
+    String password = "";
     DefaultTableModel tbm = new DefaultTableModel();
 
-public void addMedicineColumn() {
-    tbm.addColumn("Medicine Id");
-    tbm.addColumn("Name");
-    tbm.addColumn("Manufacture");
-    tbm.addColumn("Dosage");
-    tbm.addColumn("Price");
-    tbm.addColumn("Quantity");
-    dataTable.setModel(tbm);
-}
+    public void addMedicineColumn() {
+        tbm.addColumn("Medicine Id");
+        tbm.addColumn("Name");
+        tbm.addColumn("Manufacture");
+        tbm.addColumn("Dosage");
+        tbm.addColumn("Price");
+        tbm.addColumn("Quantity");
+        dataTable.setModel(tbm);
+    }
 
-public void displayMedicine() {
-    try (Connection connection = DriverManager.getConnection(url, user, password)) {
-        String selectQuery = "SELECT * FROM Medecine";
-        try (PreparedStatement preparedStatement = connection.prepareStatement(selectQuery)) {
-            try (ResultSet resultSet = preparedStatement.executeQuery()) {
-                while (resultSet.next()) {
-                    tbm.addRow(new Object[]{
+    public void displayMedicine() {
+        try (Connection connection = DriverManager.getConnection(url, user, password)) {
+            String selectQuery = "SELECT * FROM Medecine";
+            try (PreparedStatement preparedStatement = connection.prepareStatement(selectQuery)) {
+                try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                    while (resultSet.next()) {
+                        tbm.addRow(new Object[]{
                             resultSet.getInt("id"),
                             resultSet.getString("name"),
                             resultSet.getString("manfactrure"),
                             resultSet.getInt("dosage"),
                             resultSet.getInt("price"),
                             resultSet.getInt("quantity")
-                    });
+                        });
+                    }
                 }
             }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(null, "Database error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        } catch (Exception e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(null, "Unexpected error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
-    } catch (SQLException e) {
-        e.printStackTrace();
-        JOptionPane.showMessageDialog(null, "Database error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-    } catch (Exception e) {
-        e.printStackTrace();
-        JOptionPane.showMessageDialog(null, "Unexpected error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
     }
-}
 
 // Function to clear form fields for medicine
-private void clearMedicineForm() {
-    medicineNameTxt.setText("");
-    medicineManufactureTxt.setText("");
-    medicineDosageTxt.setText("");
-    medicinePriceTxt.setText("");
-    medicineQuantityTxt.setText("");
-    // Add other fields as needed
-}
-
+    private void clearMedicineForm() {
+        medicineNameTxt.setText("");
+        medicineManufactureTxt.setText("");
+        medicineDosageTxt.setText("");
+        medicinePriceTxt.setText("");
+        medicineQuantityTxt.setText("");
+        // Add other fields as needed
+    }
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -123,6 +122,11 @@ private void clearMedicineForm() {
                 "Title 1", "Title 2", "Title 3", "Title 4"
             }
         ));
+        dataTable.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                dataTableMouseClicked(evt);
+            }
+        });
         jScrollPane1.setViewportView(dataTable);
 
         medicineNameTxt.addActionListener(new java.awt.event.ActionListener() {
@@ -236,9 +240,19 @@ private void clearMedicineForm() {
 
         jButton2.setFont(new java.awt.Font("Dialog", 1, 18)); // NOI18N
         jButton2.setText("Update");
+        jButton2.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton2ActionPerformed(evt);
+            }
+        });
 
         jButton3.setFont(new java.awt.Font("Dialog", 1, 18)); // NOI18N
         jButton3.setText("Delete");
+        jButton3.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton3ActionPerformed(evt);
+            }
+        });
 
         jButton4.setFont(new java.awt.Font("Dialog", 1, 18)); // NOI18N
         jButton4.setText("Clear Form");
@@ -345,60 +359,157 @@ private void clearMedicineForm() {
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
         // TODO add your handling code here:
-    String medicineName = medicineNameTxt.getText();
-    String medicineManufacture = medicineManufactureTxt.getText();
-    String medicineDosageStr = medicineDosageTxt.getText();
-    String medicinePriceStr = medicinePriceTxt.getText();
-    String medicineQuantityStr = medicineQuantityTxt.getText();
+        String medicineName = medicineNameTxt.getText();
+        String medicineManufacture = medicineManufactureTxt.getText();
+        String medicineDosageStr = medicineDosageTxt.getText();
+        String medicinePriceStr = medicinePriceTxt.getText();
+        String medicineQuantityStr = medicineQuantityTxt.getText();
 
-    // Validate input
-    if (medicineName.isEmpty() || medicineManufacture.isEmpty() || medicineDosageStr.isEmpty() || medicinePriceStr.isEmpty() || medicineQuantityStr.isEmpty()) {
-        JOptionPane.showMessageDialog(null, "Please fill in all medicine information.", "Error", JOptionPane.ERROR_MESSAGE);
-        return; // Stop further processing
-    }
-
-    int medicineDosage;
-    int medicinePrice;
-    int medicineQuantity;
-
-    try {
-        medicineDosage = Integer.parseInt(medicineDosageStr);
-        medicinePrice = Integer.parseInt(medicinePriceStr);
-        medicineQuantity = Integer.parseInt(medicineQuantityStr);
-    } catch (NumberFormatException e) {
-        JOptionPane.showMessageDialog(null, "Dosage, Price, and Quantity must be valid numbers.", "Error", JOptionPane.ERROR_MESSAGE);
-        return; // Stop further processing
-    }
-
-    try (Connection connection = DriverManager.getConnection(url, user, password)) {
-        String insertQuery = "INSERT INTO Medecine (name, manfactrure, dosage, price, quantity) VALUES (?, ?, ?, ?, ?)";
-        try (PreparedStatement preparedStatement = connection.prepareStatement(insertQuery)) {
-            preparedStatement.setString(1, medicineName);
-            preparedStatement.setString(2, medicineManufacture);
-            preparedStatement.setInt(3, medicineDosage);
-            preparedStatement.setInt(4, medicinePrice);
-            preparedStatement.setInt(5, medicineQuantity);
-
-            int rowsAffected = preparedStatement.executeUpdate();
-
-            if (rowsAffected > 0) {
-                JOptionPane.showMessageDialog(null, "Medicine created successfully.", "Success", JOptionPane.INFORMATION_MESSAGE);
-                clearMedicineForm();
-                tbm.setRowCount(0);
-                displayMedicine();
-                // Optionally, you can clear the input fields or navigate to another screen after successful medicine creation.
-            } else {
-                JOptionPane.showMessageDialog(null, "Failed to create medicine.", "Error", JOptionPane.ERROR_MESSAGE);
-            }
+        // Validate input
+        if (medicineName.isEmpty() || medicineManufacture.isEmpty() || medicineDosageStr.isEmpty() || medicinePriceStr.isEmpty() || medicineQuantityStr.isEmpty()) {
+            JOptionPane.showMessageDialog(null, "Please fill in all medicine information.", "Error", JOptionPane.ERROR_MESSAGE);
+            return; // Stop further processing
         }
-    } catch (SQLException e) {
-        e.printStackTrace();
-        JOptionPane.showMessageDialog(null, "Database error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-    } catch (Exception e) {
-        e.printStackTrace();
-        JOptionPane.showMessageDialog(null, "Unexpected error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-    }
+
+        int medicineDosage;
+        int medicinePrice;
+        int medicineQuantity;
+
+        try {
+            medicineDosage = Integer.parseInt(medicineDosageStr);
+            medicinePrice = Integer.parseInt(medicinePriceStr);
+            medicineQuantity = Integer.parseInt(medicineQuantityStr);
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(null, "Dosage, Price, and Quantity must be valid numbers.", "Error", JOptionPane.ERROR_MESSAGE);
+            return; // Stop further processing
+        }
+
+        try (Connection connection = DriverManager.getConnection(url, user, password)) {
+            String insertQuery = "INSERT INTO Medecine (name, manfactrure, dosage, price, quantity) VALUES (?, ?, ?, ?, ?)";
+            try (PreparedStatement preparedStatement = connection.prepareStatement(insertQuery)) {
+                preparedStatement.setString(1, medicineName);
+                preparedStatement.setString(2, medicineManufacture);
+                preparedStatement.setInt(3, medicineDosage);
+                preparedStatement.setInt(4, medicinePrice);
+                preparedStatement.setInt(5, medicineQuantity);
+
+                int rowsAffected = preparedStatement.executeUpdate();
+
+                if (rowsAffected > 0) {
+                    JOptionPane.showMessageDialog(null, "Medicine created successfully.", "Success", JOptionPane.INFORMATION_MESSAGE);
+                    clearMedicineForm();
+                    tbm.setRowCount(0);
+                    displayMedicine();
+                    // Optionally, you can clear the input fields or navigate to another screen after successful medicine creation.
+                } else {
+                    JOptionPane.showMessageDialog(null, "Failed to create medicine.", "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(null, "Database error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        } catch (Exception e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(null, "Unexpected error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        }
     }//GEN-LAST:event_jButton1ActionPerformed
+    int medicineId;
+    private void dataTableMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_dataTableMouseClicked
+
+        int index = dataTable.getSelectedRow();
+        TableModel tbm = dataTable.getModel();
+        medicineId = Integer.parseInt(tbm.getValueAt(index, 0).toString());
+
+        medicineNameTxt.setText(tbm.getValueAt(index, 1).toString());
+        medicineManufactureTxt.setText(tbm.getValueAt(index, 2).toString());
+        medicineDosageTxt.setText(tbm.getValueAt(index, 3).toString());
+        medicinePriceTxt.setText(tbm.getValueAt(index, 4).toString());
+        medicineQuantityTxt.setText(tbm.getValueAt(index, 5).toString());
+    }//GEN-LAST:event_dataTableMouseClicked
+
+    private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
+        // TODO add your handling code here:
+        try {
+            String medicineName = medicineNameTxt.getText();
+            String medicineManufacture = medicineManufactureTxt.getText();
+            String medicineDosageStr = medicineDosageTxt.getText();
+            String medicinePriceStr = medicinePriceTxt.getText();
+            String medicineQuantityStr = medicineQuantityTxt.getText();
+
+            // Validate input
+            if (medicineName.isEmpty() || medicineManufacture.isEmpty() || medicineDosageStr.isEmpty() || medicinePriceStr.isEmpty() || medicineQuantityStr.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Please fill in all medicine information.", "Error", JOptionPane.ERROR_MESSAGE);
+                return; // Stop further processing
+            }
+
+            int medicineDosage = Integer.parseInt(medicineDosageStr);
+            int medicinePrice = Integer.parseInt(medicinePriceStr);
+            int medicineQuantity = Integer.parseInt(medicineQuantityStr);
+
+            try (Connection connection = DriverManager.getConnection(url, user, password)) {
+                String updateQuery = "UPDATE Medecine SET name = ?, manfactrure = ?, dosage = ?, price = ?, quantity = ? WHERE id = ?";
+                try (PreparedStatement preparedStatement = connection.prepareStatement(updateQuery)) {
+                    preparedStatement.setString(1, medicineName);
+                    preparedStatement.setString(2, medicineManufacture);
+                    preparedStatement.setInt(3, medicineDosage);
+                    preparedStatement.setInt(4, medicinePrice);
+                    preparedStatement.setInt(5, medicineQuantity);
+                    preparedStatement.setInt(6, medicineId);
+
+                    int rowsAffected = preparedStatement.executeUpdate();
+
+                    if (rowsAffected > 0) {
+                        JOptionPane.showMessageDialog(this, "Medicine updated successfully.", "Success", JOptionPane.INFORMATION_MESSAGE);
+                        tbm.setRowCount(0);
+                        displayMedicine();
+                        clearMedicineForm();
+                    } else {
+                        JOptionPane.showMessageDialog(this, "Failed to update medicine. Please check your data.");
+                    }
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+                JOptionPane.showMessageDialog(this, "Database error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            } catch (Exception e) {
+                e.printStackTrace();
+                JOptionPane.showMessageDialog(this, "Unexpected error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(this, "Dosage, Price, and Quantity must be valid numbers.", "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }//GEN-LAST:event_jButton2ActionPerformed
+
+    private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
+
+        if (medicineId >= 1) {
+            int confirm = JOptionPane.showConfirmDialog(this, "Do you want to delete this Medicine?");
+            if (confirm == JOptionPane.YES_OPTION) {
+                try (Connection connection = DriverManager.getConnection(url, user, password)) {
+                    String deleteQuery = "DELETE FROM Medecine WHERE id = ?";
+                    try (PreparedStatement preparedStatement = connection.prepareStatement(deleteQuery)) {
+                        preparedStatement.setInt(1, medicineId);
+
+                        int rowsAffected = preparedStatement.executeUpdate();
+
+                        if (rowsAffected > 0) {
+                            JOptionPane.showMessageDialog(this, "Medicine deleted successfully.", "Success", JOptionPane.INFORMATION_MESSAGE);
+                            tbm.setRowCount(0);
+                            displayMedicine();
+                            clearMedicineForm();
+                        } else {
+                            JOptionPane.showMessageDialog(this, "Failed to delete medicine.");
+                        }
+                    }
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                    JOptionPane.showMessageDialog(this, "Database error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    JOptionPane.showMessageDialog(this, "Unexpected error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        }// TODO add your handling code here:
+    }//GEN-LAST:event_jButton3ActionPerformed
 
     /**
      * @param args the command line arguments

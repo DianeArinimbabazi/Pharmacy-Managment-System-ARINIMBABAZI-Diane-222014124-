@@ -7,13 +7,13 @@ import java.sql.SQLException;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableModel;
 
 /*
  * To change this license header, choose License Headers in Project Properties.
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-
 /**
  *
  * @author la-paix
@@ -32,99 +32,99 @@ public class Sales extends javax.swing.JFrame {
     }
     int medecineId;
     String url = "jdbc:mysql://localhost:3306/pharmacy_db?zeroDateTimeBehavior=convertToNull";
-String user = "root";
-String password = "";
+    String user = "root";
+    String password = "";
     DefaultTableModel tbm = new DefaultTableModel();
 
 // Combo box model for medicine names
-DefaultComboBoxModel<String> medicineComboBoxModel = new DefaultComboBoxModel<>();
+    DefaultComboBoxModel<String> medicineComboBoxModel = new DefaultComboBoxModel<>();
 
-public void addSalesColumn() {
-    tbm.addColumn("Sale Id");
-    tbm.addColumn("Medicine");
-    tbm.addColumn("Quantity");
-    tbm.addColumn("Amount");
-    tbm.addColumn("Date");
-    dataTable.setModel(tbm);
-}
+    public void addSalesColumn() {
+        tbm.addColumn("Sale Id");
+        tbm.addColumn("Medicine");
+        tbm.addColumn("Quantity");
+        tbm.addColumn("Amount");
+        tbm.addColumn("Date");
+        dataTable.setModel(tbm);
+    }
 
-public void displaySales() {
-    try (Connection connection = DriverManager.getConnection(url, user, password)) {
-        String selectQuery = "SELECT * FROM sales";
-        try (PreparedStatement preparedStatement = connection.prepareStatement(selectQuery)) {
-            try (ResultSet resultSet = preparedStatement.executeQuery()) {
-                while (resultSet.next()) {
-                    tbm.addRow(new Object[]{
+    public void displaySales() {
+        try (Connection connection = DriverManager.getConnection(url, user, password)) {
+            String selectQuery = "SELECT * FROM sales";
+            try (PreparedStatement preparedStatement = connection.prepareStatement(selectQuery)) {
+                try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                    while (resultSet.next()) {
+                        tbm.addRow(new Object[]{
                             resultSet.getInt("id"),
                             getMedicineNameById(resultSet.getInt("medecine")),
                             resultSet.getInt("quantity"),
                             resultSet.getInt("amaount"),
                             resultSet.getString("Date")
-                    });
+                        });
+                    }
                 }
             }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(null, "Database error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        } catch (Exception e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(null, "Unexpected error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
-    } catch (SQLException e) {
-        e.printStackTrace();
-        JOptionPane.showMessageDialog(null, "Database error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-    } catch (Exception e) {
-        e.printStackTrace();
-        JOptionPane.showMessageDialog(null, "Unexpected error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
     }
-}
 
 // Function to get medicine name by id
-public String getMedicineNameById(int medecineId) {
-    try (Connection connection = DriverManager.getConnection(url, user, password)) {
-        String selectQuery = "SELECT name FROM Medecine WHERE id = ?";
-        try (PreparedStatement preparedStatement = connection.prepareStatement(selectQuery)) {
-            preparedStatement.setInt(1, medecineId);
-            try (ResultSet resultSet = preparedStatement.executeQuery()) {
-                if (resultSet.next()) {
-                    return resultSet.getString("name");
+    public String getMedicineNameById(int medecineId) {
+        try (Connection connection = DriverManager.getConnection(url, user, password)) {
+            String selectQuery = "SELECT name FROM Medecine WHERE id = ?";
+            try (PreparedStatement preparedStatement = connection.prepareStatement(selectQuery)) {
+                preparedStatement.setInt(1, medecineId);
+                try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                    if (resultSet.next()) {
+                        return resultSet.getString("name");
+                    }
                 }
             }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(null, "Database error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        } catch (Exception e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(null, "Unexpected error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
-    } catch (SQLException e) {
-        e.printStackTrace();
-        JOptionPane.showMessageDialog(null, "Database error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-    } catch (Exception e) {
-        e.printStackTrace();
-        JOptionPane.showMessageDialog(null, "Unexpected error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        return "";
     }
-    return "";
-}
 
 // Function to populate medicine combo box
-public void populateMedicineComboBox() {
-    try (Connection connection = DriverManager.getConnection(url, user, password)) {
-        String selectQuery = "SELECT id, name FROM Medecine";
-        try (PreparedStatement preparedStatement = connection.prepareStatement(selectQuery)) {
-            try (ResultSet resultSet = preparedStatement.executeQuery()) {
-                while (resultSet.next()) {
-                    medecineId = resultSet.getInt("id");
-                    String medicineName = resultSet.getString("name");
-                    medicineComboBoxModel.addElement(medicineName);
+    public void populateMedicineComboBox() {
+        try (Connection connection = DriverManager.getConnection(url, user, password)) {
+            String selectQuery = "SELECT id, name FROM Medecine";
+            try (PreparedStatement preparedStatement = connection.prepareStatement(selectQuery)) {
+                try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                    while (resultSet.next()) {
+                        medecineId = resultSet.getInt("id");
+                        String medicineName = resultSet.getString("name");
+                        medicineComboBoxModel.addElement(medicineName);
+                    }
                 }
             }
+            // Set the model for the combo box after populating it
+            medicineComboBox.setModel(medicineComboBoxModel);
+        } catch (SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(null, "Database error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        } catch (Exception e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(null, "Unexpected error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
-        // Set the model for the combo box after populating it
-        medicineComboBox.setModel(medicineComboBoxModel);
-    } catch (SQLException e) {
-        e.printStackTrace();
-        JOptionPane.showMessageDialog(null, "Database error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-    } catch (Exception e) {
-        e.printStackTrace();
-        JOptionPane.showMessageDialog(null, "Unexpected error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
     }
-}
 
 // Function to clear form fields for sales
-private void clearSalesForm() {
-    medicineComboBox.setSelectedIndex(0);
-    quantityTxt.setText("");
-    // Add other fields as needed
-}
+    private void clearSalesForm() {
+        medicineComboBox.setSelectedIndex(0);
+        quantityTxt.setText("");
+        // Add other fields as needed
+    }
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -210,6 +210,11 @@ private void clearSalesForm() {
                 "Title 1", "Title 2", "Title 3", "Title 4"
             }
         ));
+        dataTable.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                dataTableMouseClicked(evt);
+            }
+        });
         jScrollPane1.setViewportView(dataTable);
 
         jLabel5.setFont(new java.awt.Font("Dialog", 1, 18)); // NOI18N
@@ -225,9 +230,19 @@ private void clearSalesForm() {
 
         jButton2.setFont(new java.awt.Font("Dialog", 1, 18)); // NOI18N
         jButton2.setText("Update");
+        jButton2.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton2ActionPerformed(evt);
+            }
+        });
 
         jButton3.setFont(new java.awt.Font("Dialog", 1, 18)); // NOI18N
         jButton3.setText("Delete");
+        jButton3.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton3ActionPerformed(evt);
+            }
+        });
 
         jButton4.setFont(new java.awt.Font("Dialog", 1, 18)); // NOI18N
         jButton4.setText("Clear Form");
@@ -318,9 +333,106 @@ private void clearSalesForm() {
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
         // TODO add your handling code here:
-         // TODO add your handling code here:
+        // TODO add your handling code here:
+        String selectedMedicineName = (String) medicineComboBox.getSelectedItem();
+        int quantity = Integer.parseInt(quantityTxt.getText());
+
+        try (Connection connection = DriverManager.getConnection(url, user, password)) {
+            int medecineId = getMedicineIdByName(selectedMedicineName);
+
+            if (medecineId == -1) {
+                JOptionPane.showMessageDialog(null, "Invalid medicine selected.", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            // You may want to perform additional validation or checks before proceeding with the sale
+            String insertQuery = "INSERT INTO sales (medecine, quantity, amaount) VALUES (?, ?, ?)";
+            try (PreparedStatement preparedStatement = connection.prepareStatement(insertQuery)) {
+                preparedStatement.setInt(1, medecineId);
+                preparedStatement.setInt(2, quantity);
+                preparedStatement.setInt(3, getMedicinePriceById(medecineId) * quantity);
+
+                int rowsAffected = preparedStatement.executeUpdate();
+
+                if (rowsAffected > 0) {
+                    JOptionPane.showMessageDialog(null, "Sale recorded successfully.", "Success", JOptionPane.INFORMATION_MESSAGE);
+                    clearSalesForm();
+                    tbm.setRowCount(0);
+                    displaySales();
+                    // Optionally, you can clear the input fields or navigate to another screen after successful sale recording.
+                } else {
+                    JOptionPane.showMessageDialog(null, "Failed to record sale.", "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(null, "Database error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        } catch (Exception e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(null, "Unexpected error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+// Function to get medicine id by name
+    private int getMedicineIdByName(String medicineName) {
+        try (Connection connection = DriverManager.getConnection(url, user, password)) {
+            String selectQuery = "SELECT id FROM Medecine WHERE name = ?";
+            try (PreparedStatement preparedStatement = connection.prepareStatement(selectQuery)) {
+                preparedStatement.setString(1, medicineName);
+                try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                    if (resultSet.next()) {
+                        return resultSet.getInt("id");
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(null, "Database error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        } catch (Exception e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(null, "Unexpected error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        }
+        return -1;
+    }
+
+// Function to get medicine price by id
+    private int getMedicinePriceById(int medecineId) {
+        try (Connection connection = DriverManager.getConnection(url, user, password)) {
+            String selectQuery = "SELECT price FROM Medecine WHERE id = ?";
+            try (PreparedStatement preparedStatement = connection.prepareStatement(selectQuery)) {
+                preparedStatement.setInt(1, medecineId);
+                try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                    if (resultSet.next()) {
+                        return resultSet.getInt("price");
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(null, "Database error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        } catch (Exception e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(null, "Unexpected error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        }
+        return 0;
+    }//GEN-LAST:event_jButton1ActionPerformed
+    int selectedSaleId;
+    private void dataTableMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_dataTableMouseClicked
+        // TODO add your handling code here:
+        int index = dataTable.getSelectedRow();
+        TableModel tbm = dataTable.getModel();
+        selectedSaleId = Integer.parseInt(tbm.getValueAt(index, 0).toString());
+
+       
+        quantityTxt.setText(tbm.getValueAt(index, 2).toString());
+        
+    }//GEN-LAST:event_dataTableMouseClicked
+
+    private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
+        // TODO add your handling code here:
+        // Retrieve updated data from form fields
     String selectedMedicineName = (String) medicineComboBox.getSelectedItem();
-    int quantity = Integer.parseInt(quantityTxt.getText());
+    int updatedQuantity = Integer.parseInt(quantityTxt.getText());
 
     try (Connection connection = DriverManager.getConnection(url, user, password)) {
         int medecineId = getMedicineIdByName(selectedMedicineName);
@@ -330,24 +442,23 @@ private void clearSalesForm() {
             return;
         }
 
-        // You may want to perform additional validation or checks before proceeding with the sale
-
-        String insertQuery = "INSERT INTO sales (medecine, quantity, amaount) VALUES (?, ?, ?)";
-        try (PreparedStatement preparedStatement = connection.prepareStatement(insertQuery)) {
-            preparedStatement.setInt(1, medecineId);
-            preparedStatement.setInt(2, quantity);
-            preparedStatement.setInt(3, getMedicinePriceById(medecineId) * quantity);
+        // You may want to perform additional validation or checks before proceeding with the update
+        String updateQuery = "UPDATE sales SET quantity = ?, amaount = ? WHERE medecine = ?";
+        try (PreparedStatement preparedStatement = connection.prepareStatement(updateQuery)) {
+            preparedStatement.setInt(1, updatedQuantity);
+            preparedStatement.setInt(2, getMedicinePriceById(medecineId) * updatedQuantity);
+            preparedStatement.setInt(3, medecineId);
 
             int rowsAffected = preparedStatement.executeUpdate();
 
             if (rowsAffected > 0) {
-                JOptionPane.showMessageDialog(null, "Sale recorded successfully.", "Success", JOptionPane.INFORMATION_MESSAGE);
+                JOptionPane.showMessageDialog(null, "Sale updated successfully.", "Success", JOptionPane.INFORMATION_MESSAGE);
                 clearSalesForm();
                 tbm.setRowCount(0);
                 displaySales();
-                // Optionally, you can clear the input fields or navigate to another screen after successful sale recording.
+                // Optionally, you can clear the input fields or navigate to another screen after successful sale update.
             } else {
-                JOptionPane.showMessageDialog(null, "Failed to record sale.", "Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(null, "Failed to update sale.", "Error", JOptionPane.ERROR_MESSAGE);
             }
         }
     } catch (SQLException e) {
@@ -357,51 +468,50 @@ private void clearSalesForm() {
         e.printStackTrace();
         JOptionPane.showMessageDialog(null, "Unexpected error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
     }
-}
+    }//GEN-LAST:event_jButton2ActionPerformed
 
-// Function to get medicine id by name
-private int getMedicineIdByName(String medicineName) {
-    try (Connection connection = DriverManager.getConnection(url, user, password)) {
-        String selectQuery = "SELECT id FROM Medecine WHERE name = ?";
-        try (PreparedStatement preparedStatement = connection.prepareStatement(selectQuery)) {
-            preparedStatement.setString(1, medicineName);
-            try (ResultSet resultSet = preparedStatement.executeQuery()) {
-                if (resultSet.next()) {
-                    return resultSet.getInt("id");
+    private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
+        // TODO add your handling code here:
+         int confirm = JOptionPane.showConfirmDialog(this, "Do you want to delete this sale?");
+
+    if (confirm == JOptionPane.YES_OPTION) {
+        // Retrieve selected medicine name
+        String selectedMedicineName = (String) medicineComboBox.getSelectedItem();
+
+        // Use the selected medicine name to delete the specific sale record from the database
+        try (Connection connection = DriverManager.getConnection(url, user, password)) {
+            int medecineId = getMedicineIdByName(selectedMedicineName);
+
+            if (medecineId == -1) {
+                JOptionPane.showMessageDialog(null, "Invalid medicine selected.", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            String deleteQuery = "DELETE FROM sales WHERE medecine = ?";
+            try (PreparedStatement preparedStatement = connection.prepareStatement(deleteQuery)) {
+                preparedStatement.setInt(1, medecineId);
+
+                int rowsAffected = preparedStatement.executeUpdate();
+
+                if (rowsAffected > 0) {
+                    JOptionPane.showMessageDialog(null, "Sale deleted successfully.", "Success", JOptionPane.INFORMATION_MESSAGE);
+                    clearSalesForm();
+                    tbm.setRowCount(0);
+                    displaySales();
+                    // Optionally, you can clear the input fields or navigate to another screen after successful sale deletion.
+                } else {
+                    JOptionPane.showMessageDialog(null, "Failed to delete sale.", "Error", JOptionPane.ERROR_MESSAGE);
                 }
             }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(null, "Database error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        } catch (Exception e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(null, "Unexpected error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
-    } catch (SQLException e) {
-        e.printStackTrace();
-        JOptionPane.showMessageDialog(null, "Database error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-    } catch (Exception e) {
-        e.printStackTrace();
-        JOptionPane.showMessageDialog(null, "Unexpected error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
     }
-    return -1;
-}
-
-// Function to get medicine price by id
-private int getMedicinePriceById(int medecineId) {
-    try (Connection connection = DriverManager.getConnection(url, user, password)) {
-        String selectQuery = "SELECT price FROM Medecine WHERE id = ?";
-        try (PreparedStatement preparedStatement = connection.prepareStatement(selectQuery)) {
-            preparedStatement.setInt(1, medecineId);
-            try (ResultSet resultSet = preparedStatement.executeQuery()) {
-                if (resultSet.next()) {
-                    return resultSet.getInt("price");
-                }
-            }
-        }
-    } catch (SQLException e) {
-        e.printStackTrace();
-        JOptionPane.showMessageDialog(null, "Database error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-    } catch (Exception e) {
-        e.printStackTrace();
-        JOptionPane.showMessageDialog(null, "Unexpected error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-    }
-    return 0;
-    }//GEN-LAST:event_jButton1ActionPerformed
+    }//GEN-LAST:event_jButton3ActionPerformed
 
     /**
      * @param args the command line arguments

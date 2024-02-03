@@ -6,13 +6,13 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableModel;
 
 /*
  * To change this license header, choose License Headers in Project Properties.
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-
 /**
  *
  * @author la-paix
@@ -29,49 +29,49 @@ public class Suppliers extends javax.swing.JFrame {
         displaySuppliers();
     }
     String url = "jdbc:mysql://localhost:3306/pharmacy_db?zeroDateTimeBehavior=convertToNull";
-String user = "root";
-String password = "";
+    String user = "root";
+    String password = "";
     DefaultTableModel tbm = new DefaultTableModel();
 
-public void addSupplierColumn() {
-    tbm.addColumn("Supplier Id");
-    tbm.addColumn("Names");
-    tbm.addColumn("Contact");
-    tbm.addColumn("Supplied");
-    dataTable.setModel(tbm);
-}
+    public void addSupplierColumn() {
+        tbm.addColumn("Supplier Id");
+        tbm.addColumn("Names");
+        tbm.addColumn("Contact");
+        tbm.addColumn("Supplied");
+        dataTable.setModel(tbm);
+    }
 
-public void displaySuppliers() {
-    try (Connection connection = DriverManager.getConnection(url, user, password)) {
-        String selectQuery = "SELECT * FROM supprier";
-        try (PreparedStatement preparedStatement = connection.prepareStatement(selectQuery)) {
-            try (ResultSet resultSet = preparedStatement.executeQuery()) {
-                while (resultSet.next()) {
-                    tbm.addRow(new Object[]{
+    public void displaySuppliers() {
+        try (Connection connection = DriverManager.getConnection(url, user, password)) {
+            String selectQuery = "SELECT * FROM supprier";
+            try (PreparedStatement preparedStatement = connection.prepareStatement(selectQuery)) {
+                try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                    while (resultSet.next()) {
+                        tbm.addRow(new Object[]{
                             resultSet.getInt("id"),
                             resultSet.getString("names"),
                             resultSet.getString("contact"),
                             resultSet.getBoolean("supplied")
-                    });
+                        });
+                    }
                 }
             }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(null, "Database error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        } catch (Exception e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(null, "Unexpected error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
-    } catch (SQLException e) {
-        e.printStackTrace();
-        JOptionPane.showMessageDialog(null, "Database error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-    } catch (Exception e) {
-        e.printStackTrace();
-        JOptionPane.showMessageDialog(null, "Unexpected error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
     }
-}
 
 // Function to clear form fields for suppliers
-private void clearSupplierForm() {
-    supplierNameTxt.setText("");
-    supplierContactTxt.setText("");
-    suppliedCheckBox.setSelected(false);
-    // Add other fields as needed
-}
+    private void clearSupplierForm() {
+        supplierNameTxt.setText("");
+        supplierContactTxt.setText("");
+        suppliedCheckBox.setSelected(false);
+        // Add other fields as needed
+    }
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -111,9 +111,19 @@ private void clearSupplierForm() {
 
         jButton2.setFont(new java.awt.Font("Dialog", 1, 18)); // NOI18N
         jButton2.setText("Update");
+        jButton2.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton2ActionPerformed(evt);
+            }
+        });
 
         jButton3.setFont(new java.awt.Font("Dialog", 1, 18)); // NOI18N
         jButton3.setText("Delete");
+        jButton3.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton3ActionPerformed(evt);
+            }
+        });
 
         jButton4.setFont(new java.awt.Font("Dialog", 1, 18)); // NOI18N
         jButton4.setText("Clear Form");
@@ -166,6 +176,11 @@ private void clearSupplierForm() {
                 "Title 1", "Title 2", "Title 3", "Title 4"
             }
         ));
+        dataTable.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                dataTableMouseClicked(evt);
+            }
+        });
         jScrollPane1.setViewportView(dataTable);
 
         jLabel5.setFont(new java.awt.Font("Dialog", 1, 18)); // NOI18N
@@ -281,47 +296,142 @@ private void clearSupplierForm() {
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
         // TODO add your handling code here:
-         String url = "jdbc:mysql://localhost:3306/pharmacy_db?zeroDateTimeBehavior=convertToNull";
-    String user = "root";
-    String password = "";
+        String url = "jdbc:mysql://localhost:3306/pharmacy_db?zeroDateTimeBehavior=convertToNull";
+        String user = "root";
+        String password = "";
 
-    String supplierName = supplierNameTxt.getText();  // Assuming you have a JTextField for supplierName
-    String supplierContact = supplierContactTxt.getText();  // Assuming you have a JTextField for supplierContact
-    boolean supplied = suppliedCheckBox.isSelected();  // Assuming you have a JCheckBox for supplied
+        String supplierName = supplierNameTxt.getText();  // Assuming you have a JTextField for supplierName
+        String supplierContact = supplierContactTxt.getText();  // Assuming you have a JTextField for supplierContact
+        boolean supplied = suppliedCheckBox.isSelected();  // Assuming you have a JCheckBox for supplied
 
-    try (Connection connection = DriverManager.getConnection(url, user, password)) {
-        // Validate input
-        if (supplierName.isEmpty() || supplierContact.isEmpty()) {
-            JOptionPane.showMessageDialog(null, "Please fill in all supplier information.", "Error", JOptionPane.ERROR_MESSAGE);
-            return; // Stop further processing
-        }
-
-        String insertQuery = "INSERT INTO supprier (names, contact, supplied) VALUES (?, ?, ?)";
-        try (PreparedStatement preparedStatement = connection.prepareStatement(insertQuery)) {
-            preparedStatement.setString(1, supplierName);
-            preparedStatement.setString(2, supplierContact);
-            preparedStatement.setBoolean(3, supplied);
-
-            int rowsAffected = preparedStatement.executeUpdate();
-
-            if (rowsAffected > 0) {
-                JOptionPane.showMessageDialog(null, "Supplier created successfully.", "Success", JOptionPane.INFORMATION_MESSAGE);
-                clearSupplierForm();
-                tbm.setRowCount(0);
-                displaySuppliers();
-                // Optionally, you can clear the input fields or navigate to another screen after successful supplier creation.
-            } else {
-                JOptionPane.showMessageDialog(null, "Failed to create supplier.", "Error", JOptionPane.ERROR_MESSAGE);
+        try (Connection connection = DriverManager.getConnection(url, user, password)) {
+            // Validate input
+            if (supplierName.isEmpty() || supplierContact.isEmpty()) {
+                JOptionPane.showMessageDialog(null, "Please fill in all supplier information.", "Error", JOptionPane.ERROR_MESSAGE);
+                return; // Stop further processing
             }
+
+            String insertQuery = "INSERT INTO supprier (names, contact, supplied) VALUES (?, ?, ?)";
+            try (PreparedStatement preparedStatement = connection.prepareStatement(insertQuery)) {
+                preparedStatement.setString(1, supplierName);
+                preparedStatement.setString(2, supplierContact);
+                preparedStatement.setBoolean(3, supplied);
+
+                int rowsAffected = preparedStatement.executeUpdate();
+
+                if (rowsAffected > 0) {
+                    JOptionPane.showMessageDialog(null, "Supplier created successfully.", "Success", JOptionPane.INFORMATION_MESSAGE);
+                    clearSupplierForm();
+                    tbm.setRowCount(0);
+                    displaySuppliers();
+                    // Optionally, you can clear the input fields or navigate to another screen after successful supplier creation.
+                } else {
+                    JOptionPane.showMessageDialog(null, "Failed to create supplier.", "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(null, "Database error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        } catch (Exception e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(null, "Unexpected error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
-    } catch (SQLException e) {
-        e.printStackTrace();
-        JOptionPane.showMessageDialog(null, "Database error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-    } catch (Exception e) {
-        e.printStackTrace();
-        JOptionPane.showMessageDialog(null, "Unexpected error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-    }
     }//GEN-LAST:event_jButton1ActionPerformed
+    int supplierId;
+    private void dataTableMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_dataTableMouseClicked
+        // TODO add your handling code here:
+        int index = dataTable.getSelectedRow();
+        TableModel tbm = dataTable.getModel();
+        supplierId = Integer.parseInt(tbm.getValueAt(index, 0).toString());
+
+        supplierNameTxt.setText(tbm.getValueAt(index, 1).toString());
+        supplierContactTxt.setText(tbm.getValueAt(index, 2).toString());
+        // Assuming 'supplied' is a boolean attribute; change the type if necessary
+        boolean supplied = (boolean) tbm.getValueAt(index, 3);
+        suppliedCheckBox.setSelected(supplied);
+    }//GEN-LAST:event_dataTableMouseClicked
+
+    private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
+        // TODO add your handling code here:
+        try {
+            String supplierName = supplierNameTxt.getText();
+            String supplierContact = supplierContactTxt.getText();
+            boolean supplied = suppliedCheckBox.isSelected();
+
+            // Validate input
+            if (supplierName.isEmpty() || supplierContact.isEmpty()) {
+                JOptionPane.showMessageDialog(null, "Please fill in all supplier information.", "Error", JOptionPane.ERROR_MESSAGE);
+                return; // Stop further processing
+            }
+
+            try (Connection connection = DriverManager.getConnection(url, user, password)) {
+                String updateQuery = "UPDATE supprier SET names=?, contact=?, supplied=? WHERE id=?";
+                try (PreparedStatement preparedStatement = connection.prepareStatement(updateQuery)) {
+                    preparedStatement.setString(1, supplierName);
+                    preparedStatement.setString(2, supplierContact);
+                    preparedStatement.setBoolean(3, supplied);
+                    preparedStatement.setInt(4, supplierId); // Assuming supplierId is correctly set
+
+                    int rowsAffected = preparedStatement.executeUpdate();
+
+                    if (rowsAffected > 0) {
+                        JOptionPane.showMessageDialog(null, "Supplier updated successfully.", "Success", JOptionPane.INFORMATION_MESSAGE);
+                        clearSupplierForm();
+                        tbm.setRowCount(0);
+                        displaySuppliers();
+                    } else {
+                        JOptionPane.showMessageDialog(null, "Failed to update supplier.", "Error", JOptionPane.ERROR_MESSAGE);
+                    }
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+                JOptionPane.showMessageDialog(null, "Database error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            } catch (Exception e) {
+                e.printStackTrace();
+                JOptionPane.showMessageDialog(null, "Unexpected error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(null, "An error occurred. Please check your data.");
+            e.printStackTrace();
+        }
+    }//GEN-LAST:event_jButton2ActionPerformed
+
+    private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
+        // TODO add your handling code here:
+        try {
+            if (supplierId >= 1) {
+                int confirm = JOptionPane.showConfirmDialog(this, "Do you want to delete this supplier?");
+                if (confirm == JOptionPane.YES_OPTION) {
+                    try (Connection connection = DriverManager.getConnection(url, user, password)) {
+                        String deleteQuery = "DELETE FROM supprier WHERE id=?";
+                        try (PreparedStatement preparedStatement = connection.prepareStatement(deleteQuery)) {
+                            preparedStatement.setInt(1, supplierId);
+
+                            int rowsAffected = preparedStatement.executeUpdate();
+
+                            if (rowsAffected > 0) {
+                                JOptionPane.showMessageDialog(null, "Supplier deleted successfully.", "Success", JOptionPane.INFORMATION_MESSAGE);
+                                clearSupplierForm();
+                                tbm.setRowCount(0);
+                                displaySuppliers();
+                            } else {
+                                JOptionPane.showMessageDialog(null, "Failed to delete supplier.", "Error", JOptionPane.ERROR_MESSAGE);
+                            }
+                        }
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                        JOptionPane.showMessageDialog(null, "Database error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        JOptionPane.showMessageDialog(null, "Unexpected error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(null, "An error occurred. Please check your data.");
+            e.printStackTrace();
+        }
+    }//GEN-LAST:event_jButton3ActionPerformed
 
     /**
      * @param args the command line arguments
