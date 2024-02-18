@@ -13,7 +13,6 @@ import javax.swing.table.DefaultTableModel;
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-
 /**
  *
  * @author la-paix
@@ -30,37 +29,65 @@ public class Inventory extends javax.swing.JFrame {
         displayInventory();
         populateMedicineComboBox();
     }
-    
-     private void clearInventoryForm() {
+
+    private void clearInventoryForm() {
         medicineComboBox.setSelectedIndex(0);
         quantityTxt.setText("");
         // Add other fields as needed
     }
-      String url = "jdbc:mysql://localhost:3306/pharmacy_db?zeroDateTimeBehavior=convertToNull";
+    String url = "jdbc:mysql://localhost:3306/pharmacy_db?zeroDateTimeBehavior=convertToNull";
     String user = "root";
     String password = "";
     DefaultTableModel tbm = new DefaultTableModel();
 
     // Combo box model for medicine names
     DefaultComboBoxModel<String> medicineComboBoxModel = new DefaultComboBoxModel<>();
-     public void addInventoryColumn() {
+
+    public void addInventoryColumn() {
         tbm.addColumn("Inventory Id");
         tbm.addColumn("Medicine");
         tbm.addColumn("Quantity");
         dataTable.setModel(tbm);
     }
+    
+    public int getMedicineIdByName(String medicineName) {
+    int medicineId = -1; // Default value if medicine is not found
+
+    try (Connection connection = DriverManager.getConnection(url, user, password)) {
+        String selectQuery = "SELECT id FROM Medecine WHERE name = ?";
+        try (PreparedStatement preparedStatement = connection.prepareStatement(selectQuery)) {
+            preparedStatement.setString(1, medicineName);
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                if (resultSet.next()) {
+                    medicineId = resultSet.getInt("id");
+                }
+            }
+        }
+    } catch (SQLException e) {
+        e.printStackTrace();
+        JOptionPane.showMessageDialog(null, "Database error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+    } catch (Exception e) {
+        e.printStackTrace();
+        JOptionPane.showMessageDialog(null, "Unexpected error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+    }
+
+    return medicineId;
+}
+
 
     public void displayInventory() {
         tbm.setRowCount(0); // Clear existing rows
         try (Connection connection = DriverManager.getConnection(url, user, password)) {
-            String selectQuery = "SELECT * FROM inventory";
+            String selectQuery = "SELECT i.id, m.name AS medicine_name, i.quantiyAvaliable "
+                    + "FROM inventory i "
+                    + "JOIN Medecine m ON i.medecineId = m.id";
             try (PreparedStatement preparedStatement = connection.prepareStatement(selectQuery)) {
                 try (ResultSet resultSet = preparedStatement.executeQuery()) {
                     while (resultSet.next()) {
                         tbm.addRow(new Object[]{
-                                resultSet.getInt("id"),
-                                getMedicineNameById(resultSet.getInt("medecineId")),
-                                resultSet.getInt("quantiyAvaliable")
+                            resultSet.getInt("id"),
+                            resultSet.getString("medicine_name"),
+                            resultSet.getInt("quantiyAvaliable")
                         });
                     }
                 }
@@ -73,6 +100,7 @@ public class Inventory extends javax.swing.JFrame {
             JOptionPane.showMessageDialog(null, "Unexpected error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
+    int medecineId;
 
     public void populateMedicineComboBox() {
         medicineComboBoxModel.removeAllElements(); // Clear existing elements
@@ -81,7 +109,7 @@ public class Inventory extends javax.swing.JFrame {
             try (PreparedStatement preparedStatement = connection.prepareStatement(selectQuery)) {
                 try (ResultSet resultSet = preparedStatement.executeQuery()) {
                     while (resultSet.next()) {
-                        int medecineId = resultSet.getInt("id");
+                        medecineId = resultSet.getInt("id");
                         String medicineName = resultSet.getString("name");
                         medicineComboBoxModel.addElement(medicineName);
                     }
@@ -98,27 +126,6 @@ public class Inventory extends javax.swing.JFrame {
         // Set combo box model
         medicineComboBox.setModel(medicineComboBoxModel);
     }
-      private String getMedicineNameById(int medecineId) {
-        try (Connection connection = DriverManager.getConnection(url, user, password)) {
-            String selectQuery = "SELECT name FROM Medecine WHERE id = ?";
-            try (PreparedStatement preparedStatement = connection.prepareStatement(selectQuery)) {
-                preparedStatement.setInt(1, medecineId);
-                try (ResultSet resultSet = preparedStatement.executeQuery()) {
-                    if (resultSet.next()) {
-                        return resultSet.getString("name");
-                    }
-                }
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-            JOptionPane.showMessageDialog(null, "Database error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-        } catch (Exception e) {
-            e.printStackTrace();
-            JOptionPane.showMessageDialog(null, "Unexpected error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-        }
-        return "";
-    }
-
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -157,6 +164,11 @@ public class Inventory extends javax.swing.JFrame {
                 "Title 1", "Title 2", "Title 3", "Title 4"
             }
         ));
+        dataTable.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                dataTableMouseClicked(evt);
+            }
+        });
         jScrollPane1.setViewportView(dataTable);
 
         jLabel1.setText("Medecine");
@@ -215,9 +227,19 @@ public class Inventory extends javax.swing.JFrame {
 
         jButton2.setFont(new java.awt.Font("Dialog", 1, 18)); // NOI18N
         jButton2.setText("Update");
+        jButton2.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton2ActionPerformed(evt);
+            }
+        });
 
         jButton3.setFont(new java.awt.Font("Dialog", 1, 18)); // NOI18N
         jButton3.setText("Delete");
+        jButton3.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton3ActionPerformed(evt);
+            }
+        });
 
         jButton4.setFont(new java.awt.Font("Dialog", 1, 18)); // NOI18N
         jButton4.setText("Clear Form");
@@ -307,42 +329,139 @@ public class Inventory extends javax.swing.JFrame {
     }//GEN-LAST:event_jButton5ActionPerformed
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-//    	 String selectedMedicine = (String) medicineComboBox.getSelectedItem();
-//    	    int quantity;
-//
-//    	    try {
-//    	        quantity = Integer.parseInt(quantityTxt.getText());
-//    	    } catch (NumberFormatException ex) {
-//    	        JOptionPane.showMessageDialog(null, "Please enter a valid quantity.", "Error", JOptionPane.ERROR_MESSAGE);
-//    	        return;
-//    	    }
-//
-//    	    int medecineId = getMedicineIdByName(selectedMedicine);
-//
-//    	    try (Connection connection = DriverManager.getConnection(url, user, password)) {
-//    	        String insertQuery = "INSERT INTO inventory (medecineId, quantityAvailable) VALUES (?, ?)";
-//    	        try (PreparedStatement preparedStatement = connection.prepareStatement(insertQuery)) {
-//    	            preparedStatement.setInt(1, medecineId);
-//    	            preparedStatement.setInt(2, quantity);
-//
-//    	            int rowsAffected = preparedStatement.executeUpdate();
-//
-//    	            if (rowsAffected > 0) {
-//    	                JOptionPane.showMessageDialog(null, "Inventory added successfully.", "Success", JOptionPane.INFORMATION_MESSAGE);
-//    	                clearInventoryForm();
-//    	                displayInventory(); // Update the displayed inventory after adding
-//    	            } else {
-//    	                JOptionPane.showMessageDialog(null, "Failed to add inventory.", "Error", JOptionPane.ERROR_MESSAGE);
-//    	            }
-//    	        }
-//    	    } catch (SQLException e) {
-//    	        e.printStackTrace();
-//    	        JOptionPane.showMessageDialog(null, "Database error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-//    	    } catch (Exception e) {
-//    	        e.printStackTrace();
-//    	        JOptionPane.showMessageDialog(null, "Unexpected error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-//    	    }
+        String selectedMedicineName = (String) medicineComboBox.getSelectedItem();
+        int quantity = Integer.parseInt(quantityTxt.getText());
+
+        try (Connection connection = DriverManager.getConnection(url, user, password)) {
+            int medicineId = getMedicineIdByName(selectedMedicineName);
+
+            if (medicineId == -1) {
+                JOptionPane.showMessageDialog(null, "Invalid medicine selected.", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            String insertQuery = "INSERT INTO inventory (medecineId, quantiyAvaliable) VALUES (?, ?)";
+            try (PreparedStatement preparedStatement = connection.prepareStatement(insertQuery)) {
+                preparedStatement.setInt(1, medicineId);
+                preparedStatement.setInt(2, quantity);
+
+                int rowsAffected = preparedStatement.executeUpdate();
+
+                if (rowsAffected > 0) {
+                    JOptionPane.showMessageDialog(null, "Inventory saved successfully.", "Success", JOptionPane.INFORMATION_MESSAGE);
+                    clearInventoryForm();
+                    tbm.setRowCount(0);
+                    displayInventory();
+                    // Optionally, you can clear the input fields or navigate to another screen after successful inventory creation.
+                } else {
+                    JOptionPane.showMessageDialog(null, "Failed to save inventory.", "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(null, "Database error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        } catch (Exception e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(null, "Unexpected error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        }
+
     }//GEN-LAST:event_jButton1ActionPerformed
+
+    private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
+        // TODO add your handling code here:
+        
+        int selectedRow = dataTable.getSelectedRow();
+    if (selectedRow == -1) {
+        JOptionPane.showMessageDialog(null, "Please select a row to delete.", "Error", JOptionPane.ERROR_MESSAGE);
+        return;
+    }
+    
+    int inventoryId = (int) dataTable.getValueAt(selectedRow, 0);
+    int confirmation = JOptionPane.showConfirmDialog(null, "Are you sure you want to delete this inventory item?", "Confirm Delete", JOptionPane.YES_NO_OPTION);
+    if (confirmation == JOptionPane.YES_OPTION) {
+        try (Connection connection = DriverManager.getConnection(url, user, password)) {
+            String deleteQuery = "DELETE FROM inventory WHERE id = ?";
+            try (PreparedStatement preparedStatement = connection.prepareStatement(deleteQuery)) {
+                preparedStatement.setInt(1, inventoryId);
+                int rowsAffected = preparedStatement.executeUpdate();
+                if (rowsAffected > 0) {
+                    JOptionPane.showMessageDialog(null, "Inventory item deleted successfully.", "Success", JOptionPane.INFORMATION_MESSAGE);
+                    tbm.setRowCount(0);
+                    displayInventory();
+                } else {
+                    JOptionPane.showMessageDialog(null, "Failed to delete inventory item.", "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(null, "Database error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        } catch (Exception e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(null, "Unexpected error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+    }//GEN-LAST:event_jButton3ActionPerformed
+
+    private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
+       int selectedRow = dataTable.getSelectedRow();
+    if (selectedRow == -1) {
+        JOptionPane.showMessageDialog(null, "Please select a row to update.", "Error", JOptionPane.ERROR_MESSAGE);
+        return;
+    }
+
+    // Extract data from the selected row
+    int inventoryId = (int) dataTable.getValueAt(selectedRow, 0);
+    String medicineName = (String) medicineComboBox.getSelectedItem();
+    int newQuantity;
+    try {
+        newQuantity = Integer.parseInt(quantityTxt.getText());
+    } catch (NumberFormatException e) {
+        JOptionPane.showMessageDialog(null, "Invalid quantity entered. Please enter a valid number.", "Error", JOptionPane.ERROR_MESSAGE);
+        return;
+    }
+
+    // Update the selected row in the database
+    try (Connection connection = DriverManager.getConnection(url, user, password)) {
+        String updateQuery = "UPDATE inventory SET medecineId = ?, quantiyAvaliable = ? WHERE id = ?";
+        try (PreparedStatement preparedStatement = connection.prepareStatement(updateQuery)) {
+            preparedStatement.setInt(1, getMedicineIdByName(medicineName));
+            preparedStatement.setInt(2, newQuantity);
+            preparedStatement.setInt(3, inventoryId);
+            int rowsAffected = preparedStatement.executeUpdate();
+            if (rowsAffected > 0) {
+                JOptionPane.showMessageDialog(null, "Inventory item updated successfully.", "Success", JOptionPane.INFORMATION_MESSAGE);
+                tbm.setRowCount(0);
+                displayInventory();
+            } else {
+                JOptionPane.showMessageDialog(null, "Failed to update inventory item.", "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    } catch (SQLException e) {
+        e.printStackTrace();
+        JOptionPane.showMessageDialog(null, "Database error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+    } catch (Exception e) {
+        e.printStackTrace();
+        JOptionPane.showMessageDialog(null, "Unexpected error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+    }
+    }//GEN-LAST:event_jButton2ActionPerformed
+
+    private void dataTableMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_dataTableMouseClicked
+        // TODO add your handling code here:
+        int selectedRow = dataTable.getSelectedRow();
+    if (selectedRow == -1) {
+        JOptionPane.showMessageDialog(null, "Please select a row to update.", "Error", JOptionPane.ERROR_MESSAGE);
+        return;
+    }
+    
+    int inventoryId = (int) dataTable.getValueAt(selectedRow, 0);
+    String medicineName = (String) dataTable.getValueAt(selectedRow, 1);
+    int quantity = (int) dataTable.getValueAt(selectedRow, 2);
+    
+ 
+    inventoryId=Integer.valueOf(String.valueOf(inventoryId));
+    medicineComboBox.setSelectedItem(medicineName);
+    quantityTxt.setText(String.valueOf(quantity));
+    }//GEN-LAST:event_dataTableMouseClicked
 
     /**
      * @param args the command line arguments
